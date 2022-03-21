@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="mainTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2022-03-21T08:19:49" hostname="LAPTOP-375F8KHC" time="0.063">
+  <properties/>
+  <testcase name="[1] 20220321161205, 20220321161206, 0.05" classname="mainTest" time="0.052"/>
+  <testcase name="[2] 20220321161205, 20220321161105, 输入错误" classname="mainTest" time="0.002"/>
+  <testcase name="[3] 20220321161205, 20220322161205, 143.00" classname="mainTest" time="0.002"/>
+  <testcase name="[4] 20220321161205, 20230321161205, 输入错误" classname="mainTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
