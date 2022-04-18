@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id "info.solidsoft.pitest" version "1.7.4"
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2'
+}
+apply from: "$rootDir/gradle/config/scripts/style.gradle"
+apply from: "$rootDir/gradle/config/scripts/coverage.gradle"
+coverage.excludePackages = [
+]
+coverage.excludeClasses = [
+]
+style.excludePackages = [
+]
+style.excludeClasses = [
+]
+tasks.withType(JavaCompile){
+    options.encoding("utf-8")
+}
+pitest {
+    targetClasses = ['mimic.*']
+    threads = 4
+    outputFormats = ['HTML']
+    timestampedReports = true
+    junit5PluginVersion = '0.15'
+}

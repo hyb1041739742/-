@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="mimic.LinkedListTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2022-04-18T08:47:45" hostname="LAPTOP-375F8KHC" time="0.089">
+  <properties/>
+  <testcase name="[1] null, null, null, 1" classname="mimic.LinkedListTest" time="0.072"/>
+  <testcase name="[2] A, null, null, 1" classname="mimic.LinkedListTest" time="0.001"/>
+  <testcase name="[3] A, B, null, 2" classname="mimic.LinkedListTest" time="0.001"/>
+  <testcase name="[4] A, A, A, 1" classname="mimic.LinkedListTest" time="0.001"/>
+  <testcase name="[5] A, B, B, 1" classname="mimic.LinkedListTest" time="0.001"/>
+  <testcase name="[6] B, B, A, 2" classname="mimic.LinkedListTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

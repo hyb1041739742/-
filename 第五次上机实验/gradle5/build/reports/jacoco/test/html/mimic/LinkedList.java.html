@@ -1,0 +1,1264 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LinkedList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">gradle5</a> &gt; <a href="index.source.html" class="el_package">mimic</a> &gt; <span class="el_source">LinkedList.java</span></div><h1>LinkedList.java</h1><pre class="source lang-java linenums">/*
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+
+package mimic;
+
+import java.util.*;
+import java.util.function.Consumer;
+
+/**
+ * Doubly-linked list implementation of the {@code List} and {@code Deque}
+ * interfaces.  Implements all optional list operations, and permits all
+ * elements (including {@code null}).
+ *
+ * &lt;p&gt;All of the operations perform as could be expected for a doubly-linked
+ * list.  Operations that index into the list will traverse the list from
+ * the beginning or the end, whichever is closer to the specified index.
+ *
+ * &lt;p&gt;&lt;strong&gt;Note that this implementation is not synchronized.&lt;/strong&gt;
+ * If multiple threads access a linked list concurrently, and at least
+ * one of the threads modifies the list structurally, it &lt;i&gt;must&lt;/i&gt; be
+ * synchronized externally.  (A structural modification is any operation
+ * that adds or deletes one or more elements; merely setting the value of
+ * an element is not a structural modification.)  This is typically
+ * accomplished by synchronizing on some object that naturally
+ * encapsulates the list.
+ *
+ * If no such object exists, the list should be &quot;wrapped&quot; using the
+ *
+ * method.  This is best done at creation time, to prevent accidental
+ * unsynchronized access to the list:&lt;pre&gt;
+ *   List list = Collections.synchronizedList(new LinkedList(...));&lt;/pre&gt;
+ *
+ * &lt;p&gt;The iterators returned by this class's {@code iterator} and
+ * {@code listIterator} methods are &lt;i&gt;fail-fast&lt;/i&gt;: if the list is
+ * structurally modified at any time after the iterator is created, in
+ * any way except through the Iterator's own {@code remove} or
+ * {@code add} methods, the iterator will throw a {@link
+ * ConcurrentModificationException}.  Thus, in the face of concurrent
+ * modification, the iterator fails quickly and cleanly, rather than
+ * risking arbitrary, non-deterministic behavior at an undetermined
+ * time in the future.
+ *
+ * &lt;p&gt;Note that the fail-fast behavior of an iterator cannot be guaranteed
+ * as it is, generally speaking, impossible to make any hard guarantees in the
+ * presence of unsynchronized concurrent modification.  Fail-fast iterators
+ * throw {@code ConcurrentModificationException} on a best-effort basis.
+ * Therefore, it would be wrong to write a program that depended on this
+ * exception for its correctness:   &lt;i&gt;the fail-fast behavior of iterators
+ * should be used only to detect bugs.&lt;/i&gt;
+ *
+ * &lt;p&gt;This class is a member of the
+ * &lt;a href=&quot;{@docRoot}/../technotes/guides/collections/index.html&quot;&gt;
+ * Java Collections Framework&lt;/a&gt;.
+ *
+ * @author  Josh Bloch
+ * @see     List
+ * @see     ArrayList
+ * @since 1.2
+ * @param &lt;E&gt; the type of elements held in this collection
+ */
+
+public class LinkedList&lt;E&gt;
+    extends AbstractSequentialList&lt;E&gt;
+    implements List&lt;E&gt;, Deque&lt;E&gt;, Cloneable, java.io.Serializable
+{
+<span class="fc" id="L88">    transient int size = 0;</span>
+
+    /**
+     * Pointer to first node.
+     * Invariant: (first == null &amp;&amp; last == null) ||
+     *            (first.prev == null &amp;&amp; first.item != null)
+     */
+    transient Node&lt;E&gt; first;
+
+    /**
+     * Pointer to last node.
+     * Invariant: (first == null &amp;&amp; last == null) ||
+     *            (last.next == null &amp;&amp; last.item != null)
+     */
+    transient Node&lt;E&gt; last;
+
+    /**
+     * Constructs an empty list.
+     */
+<span class="fc" id="L107">    public LinkedList() {</span>
+<span class="fc" id="L108">    }</span>
+
+    /**
+     * Constructs a list containing the elements of the specified
+     * collection, in the order they are returned by the collection's
+     * iterator.
+     *
+     * @param  c the collection whose elements are to be placed into this list
+     * @throws NullPointerException if the specified collection is null
+     */
+    public LinkedList(Collection&lt;? extends E&gt; c) {
+<span class="nc" id="L119">        this();</span>
+<span class="nc" id="L120">        addAll(c);</span>
+<span class="nc" id="L121">    }</span>
+
+    /**
+     * Links e as first element.
+     */
+    private void linkFirst(E e) {
+<span class="nc" id="L127">        final Node&lt;E&gt; f = first;</span>
+<span class="nc" id="L128">        final Node&lt;E&gt; newNode = new Node&lt;&gt;(null, e, f);</span>
+<span class="nc" id="L129">        first = newNode;</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (f == null)</span>
+<span class="nc" id="L131">            last = newNode;</span>
+        else
+<span class="nc" id="L133">            f.prev = newNode;</span>
+<span class="nc" id="L134">        size++;</span>
+<span class="nc" id="L135">        modCount++;</span>
+<span class="nc" id="L136">    }</span>
+
+    /**
+     * Links e as last element.
+     */
+    void linkLast(E e) {
+<span class="fc" id="L142">        final Node&lt;E&gt; l = last;</span>
+<span class="fc" id="L143">        final Node&lt;E&gt; newNode = new Node&lt;&gt;(l, e, null);</span>
+<span class="fc" id="L144">        last = newNode;</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        if (l == null)</span>
+<span class="fc" id="L146">            first = newNode;</span>
+        else
+<span class="fc" id="L148">            l.next = newNode;</span>
+<span class="fc" id="L149">        size++;</span>
+<span class="fc" id="L150">        modCount++;</span>
+<span class="fc" id="L151">    }</span>
+
+    /**
+     * Inserts element e before non-null Node succ.
+     */
+    void linkBefore(E e, Node&lt;E&gt; succ) {
+        // assert succ != null;
+<span class="nc" id="L158">        final Node&lt;E&gt; pred = succ.prev;</span>
+<span class="nc" id="L159">        final Node&lt;E&gt; newNode = new Node&lt;&gt;(pred, e, succ);</span>
+<span class="nc" id="L160">        succ.prev = newNode;</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (pred == null)</span>
+<span class="nc" id="L162">            first = newNode;</span>
+        else
+<span class="nc" id="L164">            pred.next = newNode;</span>
+<span class="nc" id="L165">        size++;</span>
+<span class="nc" id="L166">        modCount++;</span>
+<span class="nc" id="L167">    }</span>
+
+    /**
+     * Unlinks non-null first node f.
+     */
+    private E unlinkFirst(Node&lt;E&gt; f) {
+        // assert f == first &amp;&amp; f != null;
+<span class="nc" id="L174">        final E element = f.item;</span>
+<span class="nc" id="L175">        final Node&lt;E&gt; next = f.next;</span>
+<span class="nc" id="L176">        f.item = null;</span>
+<span class="nc" id="L177">        f.next = null; // help GC</span>
+<span class="nc" id="L178">        first = next;</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (next == null)</span>
+<span class="nc" id="L180">            last = null;</span>
+        else
+<span class="nc" id="L182">            next.prev = null;</span>
+<span class="nc" id="L183">        size--;</span>
+<span class="nc" id="L184">        modCount++;</span>
+<span class="nc" id="L185">        return element;</span>
+    }
+
+    /**
+     * Unlinks non-null last node l.
+     */
+    private E unlinkLast(Node&lt;E&gt; l) {
+        // assert l == last &amp;&amp; l != null;
+<span class="nc" id="L193">        final E element = l.item;</span>
+<span class="nc" id="L194">        final Node&lt;E&gt; prev = l.prev;</span>
+<span class="nc" id="L195">        l.item = null;</span>
+<span class="nc" id="L196">        l.prev = null; // help GC</span>
+<span class="nc" id="L197">        last = prev;</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (prev == null)</span>
+<span class="nc" id="L199">            first = null;</span>
+        else
+<span class="nc" id="L201">            prev.next = null;</span>
+<span class="nc" id="L202">        size--;</span>
+<span class="nc" id="L203">        modCount++;</span>
+<span class="nc" id="L204">        return element;</span>
+    }
+
+    /**
+     * Unlinks non-null node x.
+     */
+    E unlink(Node&lt;E&gt; x) {
+        // assert x != null;
+<span class="fc" id="L212">        final E element = x.item;</span>
+<span class="fc" id="L213">        final Node&lt;E&gt; next = x.next;</span>
+<span class="fc" id="L214">        final Node&lt;E&gt; prev = x.prev;</span>
+
+<span class="pc bpc" id="L216" title="1 of 2 branches missed.">        if (prev == null) {</span>
+<span class="fc" id="L217">            first = next;</span>
+        } else {
+<span class="nc" id="L219">            prev.next = next;</span>
+<span class="nc" id="L220">            x.prev = null;</span>
+        }
+
+<span class="pc bpc" id="L223" title="1 of 2 branches missed.">        if (next == null) {</span>
+<span class="nc" id="L224">            last = prev;</span>
+        } else {
+<span class="fc" id="L226">            next.prev = prev;</span>
+<span class="fc" id="L227">            x.next = null;</span>
+        }
+
+<span class="fc" id="L230">        x.item = null;</span>
+<span class="fc" id="L231">        size--;</span>
+<span class="fc" id="L232">        modCount++;</span>
+<span class="fc" id="L233">        return element;</span>
+    }
+
+    /**
+     * Returns the first element in this list.
+     *
+     * @return the first element in this list
+     * @throws NoSuchElementException if this list is empty
+     */
+    public E getFirst() {
+<span class="nc" id="L243">        final Node&lt;E&gt; f = first;</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">        if (f == null)</span>
+<span class="nc" id="L245">            throw new NoSuchElementException();</span>
+<span class="nc" id="L246">        return f.item;</span>
+    }
+
+    /**
+     * Returns the last element in this list.
+     *
+     * @return the last element in this list
+     * @throws NoSuchElementException if this list is empty
+     */
+    public E getLast() {
+<span class="nc" id="L256">        final Node&lt;E&gt; l = last;</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">        if (l == null)</span>
+<span class="nc" id="L258">            throw new NoSuchElementException();</span>
+<span class="nc" id="L259">        return l.item;</span>
+    }
+
+    /**
+     * Removes and returns the first element from this list.
+     *
+     * @return the first element from this list
+     * @throws NoSuchElementException if this list is empty
+     */
+    public E removeFirst() {
+<span class="nc" id="L269">        final Node&lt;E&gt; f = first;</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">        if (f == null)</span>
+<span class="nc" id="L271">            throw new NoSuchElementException();</span>
+<span class="nc" id="L272">        return unlinkFirst(f);</span>
+    }
+
+    /**
+     * Removes and returns the last element from this list.
+     *
+     * @return the last element from this list
+     * @throws NoSuchElementException if this list is empty
+     */
+    public E removeLast() {
+<span class="nc" id="L282">        final Node&lt;E&gt; l = last;</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">        if (l == null)</span>
+<span class="nc" id="L284">            throw new NoSuchElementException();</span>
+<span class="nc" id="L285">        return unlinkLast(l);</span>
+    }
+
+    /**
+     * Inserts the specified element at the beginning of this list.
+     *
+     * @param e the element to add
+     */
+    public void addFirst(E e) {
+<span class="nc" id="L294">        linkFirst(e);</span>
+<span class="nc" id="L295">    }</span>
+
+    /**
+     * Appends the specified element to the end of this list.
+     *
+     * &lt;p&gt;This method is equivalent to {@link #add}.
+     *
+     * @param e the element to add
+     */
+    public void addLast(E e) {
+<span class="nc" id="L305">        linkLast(e);</span>
+<span class="nc" id="L306">    }</span>
+
+    /**
+     * Returns {@code true} if this list contains the specified element.
+     * More formally, returns {@code true} if and only if this list contains
+     * at least one element {@code e} such that
+     * &lt;tt&gt;(o==null&amp;nbsp;?&amp;nbsp;e==null&amp;nbsp;:&amp;nbsp;o.equals(e))&lt;/tt&gt;.
+     *
+     * @param o element whose presence in this list is to be tested
+     * @return {@code true} if this list contains the specified element
+     */
+    public boolean contains(Object o) {
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        return indexOf(o) != -1;</span>
+    }
+
+    /**
+     * Returns the number of elements in this list.
+     *
+     * @return the number of elements in this list
+     */
+    public int size() {
+<span class="fc" id="L327">        return size;</span>
+    }
+
+    /**
+     * Appends the specified element to the end of this list.
+     *
+     * &lt;p&gt;This method is equivalent to {@link #addLast}.
+     *
+     * @param e element to be appended to this list
+     * @return {@code true} (as specified by {@link Collection#add})
+     */
+    public boolean add(E e) {
+<span class="fc" id="L339">        linkLast(e);</span>
+<span class="fc" id="L340">        return true;</span>
+    }
+
+    /**
+     * Removes the first occurrence of the specified element from this list,
+     * if it is present.  If this list does not contain the element, it is
+     * unchanged.  More formally, removes the element with the lowest index
+     * {@code i} such that
+     * &lt;tt&gt;(o==null&amp;nbsp;?&amp;nbsp;get(i)==null&amp;nbsp;:&amp;nbsp;o.equals(get(i)))&lt;/tt&gt;
+     * (if such an element exists).  Returns {@code true} if this list
+     * contained the specified element (or equivalently, if this list
+     * changed as a result of the call).
+     *
+     * @param o element to be removed from this list, if present
+     * @return {@code true} if this list contained the specified element
+     */
+    public boolean remove(Object o) {
+<span class="pc bpc" id="L357" title="1 of 2 branches missed.">        if (o == null) {</span>
+<span class="pc bpc" id="L358" title="1 of 2 branches missed.">            for (Node&lt;E&gt; x = first; x != null; x = x.next) {</span>
+<span class="pc bpc" id="L359" title="1 of 2 branches missed.">                if (x.item == null) {</span>
+<span class="fc" id="L360">                    unlink(x);</span>
+<span class="fc" id="L361">                    return true;</span>
+                }
+            }
+        } else {
+<span class="nc bnc" id="L365" title="All 2 branches missed.">            for (Node&lt;E&gt; x = first; x != null; x = x.next) {</span>
+<span class="nc bnc" id="L366" title="All 2 branches missed.">                if (o.equals(x.item)) {</span>
+<span class="nc" id="L367">                    unlink(x);</span>
+<span class="nc" id="L368">                    return true;</span>
+                }
+            }
+        }
+<span class="nc" id="L372">        return false;</span>
+    }
+
+    /**
+     * Appends all of the elements in the specified collection to the end of
+     * this list, in the order that they are returned by the specified
+     * collection's iterator.  The behavior of this operation is undefined if
+     * the specified collection is modified while the operation is in
+     * progress.  (Note that this will occur if the specified collection is
+     * this list, and it's nonempty.)
+     *
+     * @param c collection containing elements to be added to this list
+     * @return {@code true} if this list changed as a result of the call
+     * @throws NullPointerException if the specified collection is null
+     */
+    public boolean addAll(Collection&lt;? extends E&gt; c) {
+<span class="nc" id="L388">        return addAll(size, c);</span>
+    }
+
+    /**
+     * Inserts all of the elements in the specified collection into this
+     * list, starting at the specified position.  Shifts the element
+     * currently at that position (if any) and any subsequent elements to
+     * the right (increases their indices).  The new elements will appear
+     * in the list in the order that they are returned by the
+     * specified collection's iterator.
+     *
+     * @param index index at which to insert the first element
+     *              from the specified collection
+     * @param c collection containing elements to be added to this list
+     * @return {@code true} if this list changed as a result of the call
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws NullPointerException if the specified collection is null
+     */
+    public boolean addAll(int index, Collection&lt;? extends E&gt; c) {
+<span class="nc" id="L407">        checkPositionIndex(index);</span>
+
+<span class="nc" id="L409">        Object[] a = c.toArray();</span>
+<span class="nc" id="L410">        int numNew = a.length;</span>
+<span class="nc bnc" id="L411" title="All 2 branches missed.">        if (numNew == 0)</span>
+<span class="nc" id="L412">            return false;</span>
+
+        Node&lt;E&gt; pred, succ;
+<span class="nc bnc" id="L415" title="All 2 branches missed.">        if (index == size) {</span>
+<span class="nc" id="L416">            succ = null;</span>
+<span class="nc" id="L417">            pred = last;</span>
+        } else {
+<span class="nc" id="L419">            succ = node(index);</span>
+<span class="nc" id="L420">            pred = succ.prev;</span>
+        }
+
+<span class="nc bnc" id="L423" title="All 2 branches missed.">        for (Object o : a) {</span>
+<span class="nc" id="L424">            @SuppressWarnings(&quot;unchecked&quot;) E e = (E) o;</span>
+<span class="nc" id="L425">            Node&lt;E&gt; newNode = new Node&lt;&gt;(pred, e, null);</span>
+<span class="nc bnc" id="L426" title="All 2 branches missed.">            if (pred == null)</span>
+<span class="nc" id="L427">                first = newNode;</span>
+            else
+<span class="nc" id="L429">                pred.next = newNode;</span>
+<span class="nc" id="L430">            pred = newNode;</span>
+        }
+
+<span class="nc bnc" id="L433" title="All 2 branches missed.">        if (succ == null) {</span>
+<span class="nc" id="L434">            last = pred;</span>
+        } else {
+<span class="nc" id="L436">            pred.next = succ;</span>
+<span class="nc" id="L437">            succ.prev = pred;</span>
+        }
+
+<span class="nc" id="L440">        size += numNew;</span>
+<span class="nc" id="L441">        modCount++;</span>
+<span class="nc" id="L442">        return true;</span>
+    }
+
+    /**
+     * Removes all of the elements from this list.
+     * The list will be empty after this call returns.
+     */
+    public void clear() {
+        // Clearing all of the links between nodes is &quot;unnecessary&quot;, but:
+        // - helps a generational GC if the discarded nodes inhabit
+        //   more than one generation
+        // - is sure to free memory even if there is a reachable Iterator
+<span class="nc bnc" id="L454" title="All 2 branches missed.">        for (Node&lt;E&gt; x = first; x != null; ) {</span>
+<span class="nc" id="L455">            Node&lt;E&gt; next = x.next;</span>
+<span class="nc" id="L456">            x.item = null;</span>
+<span class="nc" id="L457">            x.next = null;</span>
+<span class="nc" id="L458">            x.prev = null;</span>
+<span class="nc" id="L459">            x = next;</span>
+<span class="nc" id="L460">        }</span>
+<span class="nc" id="L461">        first = last = null;</span>
+<span class="nc" id="L462">        size = 0;</span>
+<span class="nc" id="L463">        modCount++;</span>
+<span class="nc" id="L464">    }</span>
+
+
+    // Positional Access Operations
+
+    /**
+     * Returns the element at the specified position in this list.
+     *
+     * @param index index of the element to return
+     * @return the element at the specified position in this list
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public E get(int index) {
+<span class="nc" id="L477">        checkElementIndex(index);</span>
+<span class="nc" id="L478">        return node(index).item;</span>
+    }
+
+    /**
+     * Replaces the element at the specified position in this list with the
+     * specified element.
+     *
+     * @param index index of the element to replace
+     * @param element element to be stored at the specified position
+     * @return the element previously at the specified position
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public E set(int index, E element) {
+<span class="nc" id="L491">        checkElementIndex(index);</span>
+<span class="nc" id="L492">        Node&lt;E&gt; x = node(index);</span>
+<span class="nc" id="L493">        E oldVal = x.item;</span>
+<span class="nc" id="L494">        x.item = element;</span>
+<span class="nc" id="L495">        return oldVal;</span>
+    }
+
+    /**
+     * Inserts the specified element at the specified position in this list.
+     * Shifts the element currently at that position (if any) and any
+     * subsequent elements to the right (adds one to their indices).
+     *
+     * @param index index at which the specified element is to be inserted
+     * @param element element to be inserted
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public void add(int index, E element) {
+<span class="nc" id="L508">        checkPositionIndex(index);</span>
+
+<span class="nc bnc" id="L510" title="All 2 branches missed.">        if (index == size)</span>
+<span class="nc" id="L511">            linkLast(element);</span>
+        else
+<span class="nc" id="L513">            linkBefore(element, node(index));</span>
+<span class="nc" id="L514">    }</span>
+
+    /**
+     * Removes the element at the specified position in this list.  Shifts any
+     * subsequent elements to the left (subtracts one from their indices).
+     * Returns the element that was removed from the list.
+     *
+     * @param index the index of the element to be removed
+     * @return the element previously at the specified position
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     */
+    public E remove(int index) {
+<span class="nc" id="L526">        checkElementIndex(index);</span>
+<span class="nc" id="L527">        return unlink(node(index));</span>
+    }
+
+    /**
+     * Tells if the argument is the index of an existing element.
+     */
+    private boolean isElementIndex(int index) {
+<span class="nc bnc" id="L534" title="All 4 branches missed.">        return index &gt;= 0 &amp;&amp; index &lt; size;</span>
+    }
+
+    /**
+     * Tells if the argument is the index of a valid position for an
+     * iterator or an add operation.
+     */
+    private boolean isPositionIndex(int index) {
+<span class="nc bnc" id="L542" title="All 4 branches missed.">        return index &gt;= 0 &amp;&amp; index &lt;= size;</span>
+    }
+
+    /**
+     * Constructs an IndexOutOfBoundsException detail message.
+     * Of the many possible refactorings of the error handling code,
+     * this &quot;outlining&quot; performs best with both server and client VMs.
+     */
+    private String outOfBoundsMsg(int index) {
+<span class="nc" id="L551">        return &quot;Index: &quot;+index+&quot;, Size: &quot;+size;</span>
+    }
+
+    private void checkElementIndex(int index) {
+<span class="nc bnc" id="L555" title="All 2 branches missed.">        if (!isElementIndex(index))</span>
+<span class="nc" id="L556">            throw new IndexOutOfBoundsException(outOfBoundsMsg(index));</span>
+<span class="nc" id="L557">    }</span>
+
+    private void checkPositionIndex(int index) {
+<span class="nc bnc" id="L560" title="All 2 branches missed.">        if (!isPositionIndex(index))</span>
+<span class="nc" id="L561">            throw new IndexOutOfBoundsException(outOfBoundsMsg(index));</span>
+<span class="nc" id="L562">    }</span>
+
+    /**
+     * Returns the (non-null) Node at the specified element index.
+     */
+    Node&lt;E&gt; node(int index) {
+        // assert isElementIndex(index);
+
+<span class="nc bnc" id="L570" title="All 2 branches missed.">        if (index &lt; (size &gt;&gt; 1)) {</span>
+<span class="nc" id="L571">            Node&lt;E&gt; x = first;</span>
+<span class="nc bnc" id="L572" title="All 2 branches missed.">            for (int i = 0; i &lt; index; i++)</span>
+<span class="nc" id="L573">                x = x.next;</span>
+<span class="nc" id="L574">            return x;</span>
+        } else {
+<span class="nc" id="L576">            Node&lt;E&gt; x = last;</span>
+<span class="nc bnc" id="L577" title="All 2 branches missed.">            for (int i = size - 1; i &gt; index; i--)</span>
+<span class="nc" id="L578">                x = x.prev;</span>
+<span class="nc" id="L579">            return x;</span>
+        }
+    }
+
+    // Search Operations
+
+    /**
+     * Returns the index of the first occurrence of the specified element
+     * in this list, or -1 if this list does not contain the element.
+     * More formally, returns the lowest index {@code i} such that
+     * &lt;tt&gt;(o==null&amp;nbsp;?&amp;nbsp;get(i)==null&amp;nbsp;:&amp;nbsp;o.equals(get(i)))&lt;/tt&gt;,
+     * or -1 if there is no such index.
+     *
+     * @param o element to search for
+     * @return the index of the first occurrence of the specified element in
+     *         this list, or -1 if this list does not contain the element
+     */
+    public int indexOf(Object o) {
+<span class="nc" id="L597">        int index = 0;</span>
+<span class="nc bnc" id="L598" title="All 2 branches missed.">        if (o == null) {</span>
+<span class="nc bnc" id="L599" title="All 2 branches missed.">            for (Node&lt;E&gt; x = first; x != null; x = x.next) {</span>
+<span class="nc bnc" id="L600" title="All 2 branches missed.">                if (x.item == null)</span>
+<span class="nc" id="L601">                    return index;</span>
+<span class="nc" id="L602">                index++;</span>
+            }
+        } else {
+<span class="nc bnc" id="L605" title="All 2 branches missed.">            for (Node&lt;E&gt; x = first; x != null; x = x.next) {</span>
+<span class="nc bnc" id="L606" title="All 2 branches missed.">                if (o.equals(x.item))</span>
+<span class="nc" id="L607">                    return index;</span>
+<span class="nc" id="L608">                index++;</span>
+            }
+        }
+<span class="nc" id="L611">        return -1;</span>
+    }
+
+    /**
+     * Returns the index of the last occurrence of the specified element
+     * in this list, or -1 if this list does not contain the element.
+     * More formally, returns the highest index {@code i} such that
+     * &lt;tt&gt;(o==null&amp;nbsp;?&amp;nbsp;get(i)==null&amp;nbsp;:&amp;nbsp;o.equals(get(i)))&lt;/tt&gt;,
+     * or -1 if there is no such index.
+     *
+     * @param o element to search for
+     * @return the index of the last occurrence of the specified element in
+     *         this list, or -1 if this list does not contain the element
+     */
+    public int lastIndexOf(Object o) {
+<span class="nc" id="L626">        int index = size;</span>
+<span class="nc bnc" id="L627" title="All 2 branches missed.">        if (o == null) {</span>
+<span class="nc bnc" id="L628" title="All 2 branches missed.">            for (Node&lt;E&gt; x = last; x != null; x = x.prev) {</span>
+<span class="nc" id="L629">                index--;</span>
+<span class="nc bnc" id="L630" title="All 2 branches missed.">                if (x.item == null)</span>
+<span class="nc" id="L631">                    return index;</span>
+            }
+        } else {
+<span class="nc bnc" id="L634" title="All 2 branches missed.">            for (Node&lt;E&gt; x = last; x != null; x = x.prev) {</span>
+<span class="nc" id="L635">                index--;</span>
+<span class="nc bnc" id="L636" title="All 2 branches missed.">                if (o.equals(x.item))</span>
+<span class="nc" id="L637">                    return index;</span>
+            }
+        }
+<span class="nc" id="L640">        return -1;</span>
+    }
+
+    // Queue operations.
+
+    /**
+     * Retrieves, but does not remove, the head (first element) of this list.
+     *
+     * @return the head of this list, or {@code null} if this list is empty
+     * @since 1.5
+     */
+    public E peek() {
+<span class="nc" id="L652">        final Node&lt;E&gt; f = first;</span>
+<span class="nc bnc" id="L653" title="All 2 branches missed.">        return (f == null) ? null : f.item;</span>
+    }
+
+    /**
+     * Retrieves, but does not remove, the head (first element) of this list.
+     *
+     * @return the head of this list
+     * @throws NoSuchElementException if this list is empty
+     * @since 1.5
+     */
+    public E element() {
+<span class="nc" id="L664">        return getFirst();</span>
+    }
+
+    /**
+     * Retrieves and removes the head (first element) of this list.
+     *
+     * @return the head of this list, or {@code null} if this list is empty
+     * @since 1.5
+     */
+    public E poll() {
+<span class="nc" id="L674">        final Node&lt;E&gt; f = first;</span>
+<span class="nc bnc" id="L675" title="All 2 branches missed.">        return (f == null) ? null : unlinkFirst(f);</span>
+    }
+
+    /**
+     * Retrieves and removes the head (first element) of this list.
+     *
+     * @return the head of this list
+     * @throws NoSuchElementException if this list is empty
+     * @since 1.5
+     */
+    public E remove() {
+<span class="nc" id="L686">        return removeFirst();</span>
+    }
+
+    /**
+     * Adds the specified element as the tail (last element) of this list.
+     *
+     * @param e the element to add
+     * @return {@code true} (as specified by {@link Queue#offer})
+     * @since 1.5
+     */
+    public boolean offer(E e) {
+<span class="nc" id="L697">        return add(e);</span>
+    }
+
+    // Deque operations
+    /**
+     * Inserts the specified element at the front of this list.
+     *
+     * @param e the element to insert
+     * @return {@code true} (as specified by {@link Deque#offerFirst})
+     * @since 1.6
+     */
+    public boolean offerFirst(E e) {
+<span class="nc" id="L709">        addFirst(e);</span>
+<span class="nc" id="L710">        return true;</span>
+    }
+
+    /**
+     * Inserts the specified element at the end of this list.
+     *
+     * @param e the element to insert
+     * @return {@code true} (as specified by {@link Deque#offerLast})
+     * @since 1.6
+     */
+    public boolean offerLast(E e) {
+<span class="nc" id="L721">        addLast(e);</span>
+<span class="nc" id="L722">        return true;</span>
+    }
+
+    /**
+     * Retrieves, but does not remove, the first element of this list,
+     * or returns {@code null} if this list is empty.
+     *
+     * @return the first element of this list, or {@code null}
+     *         if this list is empty
+     * @since 1.6
+     */
+    public E peekFirst() {
+<span class="nc" id="L734">        final Node&lt;E&gt; f = first;</span>
+<span class="nc bnc" id="L735" title="All 2 branches missed.">        return (f == null) ? null : f.item;</span>
+     }
+
+    /**
+     * Retrieves, but does not remove, the last element of this list,
+     * or returns {@code null} if this list is empty.
+     *
+     * @return the last element of this list, or {@code null}
+     *         if this list is empty
+     * @since 1.6
+     */
+    public E peekLast() {
+<span class="nc" id="L747">        final Node&lt;E&gt; l = last;</span>
+<span class="nc bnc" id="L748" title="All 2 branches missed.">        return (l == null) ? null : l.item;</span>
+    }
+
+    /**
+     * Retrieves and removes the first element of this list,
+     * or returns {@code null} if this list is empty.
+     *
+     * @return the first element of this list, or {@code null} if
+     *     this list is empty
+     * @since 1.6
+     */
+    public E pollFirst() {
+<span class="nc" id="L760">        final Node&lt;E&gt; f = first;</span>
+<span class="nc bnc" id="L761" title="All 2 branches missed.">        return (f == null) ? null : unlinkFirst(f);</span>
+    }
+
+    /**
+     * Retrieves and removes the last element of this list,
+     * or returns {@code null} if this list is empty.
+     *
+     * @return the last element of this list, or {@code null} if
+     *     this list is empty
+     * @since 1.6
+     */
+    public E pollLast() {
+<span class="nc" id="L773">        final Node&lt;E&gt; l = last;</span>
+<span class="nc bnc" id="L774" title="All 2 branches missed.">        return (l == null) ? null : unlinkLast(l);</span>
+    }
+
+    /**
+     * Pushes an element onto the stack represented by this list.  In other
+     * words, inserts the element at the front of this list.
+     *
+     * &lt;p&gt;This method is equivalent to {@link #addFirst}.
+     *
+     * @param e the element to push
+     * @since 1.6
+     */
+    public void push(E e) {
+<span class="nc" id="L787">        addFirst(e);</span>
+<span class="nc" id="L788">    }</span>
+
+    /**
+     * Pops an element from the stack represented by this list.  In other
+     * words, removes and returns the first element of this list.
+     *
+     * &lt;p&gt;This method is equivalent to {@link #removeFirst()}.
+     *
+     * @return the element at the front of this list (which is the top
+     *         of the stack represented by this list)
+     * @throws NoSuchElementException if this list is empty
+     * @since 1.6
+     */
+    public E pop() {
+<span class="nc" id="L802">        return removeFirst();</span>
+    }
+
+    /**
+     * Removes the first occurrence of the specified element in this
+     * list (when traversing the list from head to tail).  If the list
+     * does not contain the element, it is unchanged.
+     *
+     * @param o element to be removed from this list, if present
+     * @return {@code true} if the list contained the specified element
+     * @since 1.6
+     */
+    public boolean removeFirstOccurrence(Object o) {
+<span class="nc" id="L815">        return remove(o);</span>
+    }
+
+    /**
+     * Removes the last occurrence of the specified element in this
+     * list (when traversing the list from head to tail).  If the list
+     * does not contain the element, it is unchanged.
+     *
+     * @param o element to be removed from this list, if present
+     * @return {@code true} if the list contained the specified element
+     * @since 1.6
+     */
+    public boolean removeLastOccurrence(Object o) {
+<span class="nc bnc" id="L828" title="All 2 branches missed.">        if (o == null) {</span>
+<span class="nc bnc" id="L829" title="All 2 branches missed.">            for (Node&lt;E&gt; x = last; x != null; x = x.prev) {</span>
+<span class="nc bnc" id="L830" title="All 2 branches missed.">                if (x.item == null) {</span>
+<span class="nc" id="L831">                    unlink(x);</span>
+<span class="nc" id="L832">                    return true;</span>
+                }
+            }
+        } else {
+<span class="nc bnc" id="L836" title="All 2 branches missed.">            for (Node&lt;E&gt; x = last; x != null; x = x.prev) {</span>
+<span class="nc bnc" id="L837" title="All 2 branches missed.">                if (o.equals(x.item)) {</span>
+<span class="nc" id="L838">                    unlink(x);</span>
+<span class="nc" id="L839">                    return true;</span>
+                }
+            }
+        }
+<span class="nc" id="L843">        return false;</span>
+    }
+
+    /**
+     * Returns a list-iterator of the elements in this list (in proper
+     * sequence), starting at the specified position in the list.
+     * Obeys the general contract of {@code List.listIterator(int)}.&lt;p&gt;
+     *
+     * The list-iterator is &lt;i&gt;fail-fast&lt;/i&gt;: if the list is structurally
+     * modified at any time after the Iterator is created, in any way except
+     * through the list-iterator's own {@code remove} or {@code add}
+     * methods, the list-iterator will throw a
+     * {@code ConcurrentModificationException}.  Thus, in the face of
+     * concurrent modification, the iterator fails quickly and cleanly, rather
+     * than risking arbitrary, non-deterministic behavior at an undetermined
+     * time in the future.
+     *
+     * @param index index of the first element to be returned from the
+     *              list-iterator (by a call to {@code next})
+     * @return a ListIterator of the elements in this list (in proper
+     *         sequence), starting at the specified position in the list
+     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @see List#listIterator(int)
+     */
+    public ListIterator&lt;E&gt; listIterator(int index) {
+<span class="nc" id="L868">        checkPositionIndex(index);</span>
+<span class="nc" id="L869">        return new ListItr(index);</span>
+    }
+
+    private class ListItr implements ListIterator&lt;E&gt; {
+        private Node&lt;E&gt; lastReturned;
+        private Node&lt;E&gt; next;
+        private int nextIndex;
+<span class="nc" id="L876">        private int expectedModCount = modCount;</span>
+
+<span class="nc" id="L878">        ListItr(int index) {</span>
+            // assert isPositionIndex(index);
+<span class="nc bnc" id="L880" title="All 2 branches missed.">            next = (index == size) ? null : node(index);</span>
+<span class="nc" id="L881">            nextIndex = index;</span>
+<span class="nc" id="L882">        }</span>
+
+        public boolean hasNext() {
+<span class="nc bnc" id="L885" title="All 2 branches missed.">            return nextIndex &lt; size;</span>
+        }
+
+        public E next() {
+<span class="nc" id="L889">            checkForComodification();</span>
+<span class="nc bnc" id="L890" title="All 2 branches missed.">            if (!hasNext())</span>
+<span class="nc" id="L891">                throw new NoSuchElementException();</span>
+
+<span class="nc" id="L893">            lastReturned = next;</span>
+<span class="nc" id="L894">            next = next.next;</span>
+<span class="nc" id="L895">            nextIndex++;</span>
+<span class="nc" id="L896">            return lastReturned.item;</span>
+        }
+
+        public boolean hasPrevious() {
+<span class="nc bnc" id="L900" title="All 2 branches missed.">            return nextIndex &gt; 0;</span>
+        }
+
+        public E previous() {
+<span class="nc" id="L904">            checkForComodification();</span>
+<span class="nc bnc" id="L905" title="All 2 branches missed.">            if (!hasPrevious())</span>
+<span class="nc" id="L906">                throw new NoSuchElementException();</span>
+
+<span class="nc bnc" id="L908" title="All 2 branches missed.">            lastReturned = next = (next == null) ? last : next.prev;</span>
+<span class="nc" id="L909">            nextIndex--;</span>
+<span class="nc" id="L910">            return lastReturned.item;</span>
+        }
+
+        public int nextIndex() {
+<span class="nc" id="L914">            return nextIndex;</span>
+        }
+
+        public int previousIndex() {
+<span class="nc" id="L918">            return nextIndex - 1;</span>
+        }
+
+        public void remove() {
+<span class="nc" id="L922">            checkForComodification();</span>
+<span class="nc bnc" id="L923" title="All 2 branches missed.">            if (lastReturned == null)</span>
+<span class="nc" id="L924">                throw new IllegalStateException();</span>
+
+<span class="nc" id="L926">            Node&lt;E&gt; lastNext = lastReturned.next;</span>
+<span class="nc" id="L927">            unlink(lastReturned);</span>
+<span class="nc bnc" id="L928" title="All 2 branches missed.">            if (next == lastReturned)</span>
+<span class="nc" id="L929">                next = lastNext;</span>
+            else
+<span class="nc" id="L931">                nextIndex--;</span>
+<span class="nc" id="L932">            lastReturned = null;</span>
+<span class="nc" id="L933">            expectedModCount++;</span>
+<span class="nc" id="L934">        }</span>
+
+        public void set(E e) {
+<span class="nc bnc" id="L937" title="All 2 branches missed.">            if (lastReturned == null)</span>
+<span class="nc" id="L938">                throw new IllegalStateException();</span>
+<span class="nc" id="L939">            checkForComodification();</span>
+<span class="nc" id="L940">            lastReturned.item = e;</span>
+<span class="nc" id="L941">        }</span>
+
+        public void add(E e) {
+<span class="nc" id="L944">            checkForComodification();</span>
+<span class="nc" id="L945">            lastReturned = null;</span>
+<span class="nc bnc" id="L946" title="All 2 branches missed.">            if (next == null)</span>
+<span class="nc" id="L947">                linkLast(e);</span>
+            else
+<span class="nc" id="L949">                linkBefore(e, next);</span>
+<span class="nc" id="L950">            nextIndex++;</span>
+<span class="nc" id="L951">            expectedModCount++;</span>
+<span class="nc" id="L952">        }</span>
+
+        public void forEachRemaining(Consumer&lt;? super E&gt; action) {
+<span class="nc" id="L955">            Objects.requireNonNull(action);</span>
+<span class="nc bnc" id="L956" title="All 4 branches missed.">            while (modCount == expectedModCount &amp;&amp; nextIndex &lt; size) {</span>
+<span class="nc" id="L957">                action.accept(next.item);</span>
+<span class="nc" id="L958">                lastReturned = next;</span>
+<span class="nc" id="L959">                next = next.next;</span>
+<span class="nc" id="L960">                nextIndex++;</span>
+            }
+<span class="nc" id="L962">            checkForComodification();</span>
+<span class="nc" id="L963">        }</span>
+
+        final void checkForComodification() {
+<span class="nc bnc" id="L966" title="All 2 branches missed.">            if (modCount != expectedModCount)</span>
+<span class="nc" id="L967">                throw new ConcurrentModificationException();</span>
+<span class="nc" id="L968">        }</span>
+    }
+
+    private static class Node&lt;E&gt; {
+        E item;
+        Node&lt;E&gt; next;
+        Node&lt;E&gt; prev;
+
+<span class="fc" id="L976">        Node(Node&lt;E&gt; prev, E element, Node&lt;E&gt; next) {</span>
+<span class="fc" id="L977">            this.item = element;</span>
+<span class="fc" id="L978">            this.next = next;</span>
+<span class="fc" id="L979">            this.prev = prev;</span>
+<span class="fc" id="L980">        }</span>
+    }
+
+    /**
+     * @since 1.6
+     */
+    public Iterator&lt;E&gt; descendingIterator() {
+<span class="nc" id="L987">        return new DescendingIterator();</span>
+    }
+
+    /**
+     * Adapter to provide descending iterators via ListItr.previous
+     */
+<span class="nc" id="L993">    private class DescendingIterator implements Iterator&lt;E&gt; {</span>
+<span class="nc" id="L994">        private final ListItr itr = new ListItr(size());</span>
+        public boolean hasNext() {
+<span class="nc" id="L996">            return itr.hasPrevious();</span>
+        }
+        public E next() {
+<span class="nc" id="L999">            return itr.previous();</span>
+        }
+        public void remove() {
+<span class="nc" id="L1002">            itr.remove();</span>
+<span class="nc" id="L1003">        }</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private LinkedList&lt;E&gt; superClone() {
+        try {
+<span class="nc" id="L1009">            return (LinkedList&lt;E&gt;) super.clone();</span>
+<span class="nc" id="L1010">        } catch (CloneNotSupportedException e) {</span>
+<span class="nc" id="L1011">            throw new InternalError(e);</span>
+        }
+    }
+
+    /**
+     * Returns a shallow copy of this {@code LinkedList}. (The elements
+     * themselves are not cloned.)
+     *
+     * @return a shallow copy of this {@code LinkedList} instance
+     */
+    public Object clone() {
+<span class="nc" id="L1022">        LinkedList&lt;E&gt; clone = superClone();</span>
+
+        // Put clone into &quot;virgin&quot; state
+<span class="nc" id="L1025">        clone.first = clone.last = null;</span>
+<span class="nc" id="L1026">        clone.size = 0;</span>
+<span class="nc" id="L1027">        clone.modCount = 0;</span>
+
+        // Initialize clone with our elements
+<span class="nc bnc" id="L1030" title="All 2 branches missed.">        for (Node&lt;E&gt; x = first; x != null; x = x.next)</span>
+<span class="nc" id="L1031">            clone.add(x.item);</span>
+
+<span class="nc" id="L1033">        return clone;</span>
+    }
+
+    /**
+     * Returns an array containing all of the elements in this list
+     * in proper sequence (from first to last element).
+     *
+     * &lt;p&gt;The returned array will be &quot;safe&quot; in that no references to it are
+     * maintained by this list.  (In other words, this method must allocate
+     * a new array).  The caller is thus free to modify the returned array.
+     *
+     * &lt;p&gt;This method acts as bridge between array-based and collection-based
+     * APIs.
+     *
+     * @return an array containing all of the elements in this list
+     *         in proper sequence
+     */
+    public Object[] toArray() {
+<span class="nc" id="L1051">        Object[] result = new Object[size];</span>
+<span class="nc" id="L1052">        int i = 0;</span>
+<span class="nc bnc" id="L1053" title="All 2 branches missed.">        for (Node&lt;E&gt; x = first; x != null; x = x.next)</span>
+<span class="nc" id="L1054">            result[i++] = x.item;</span>
+<span class="nc" id="L1055">        return result;</span>
+    }
+
+    /**
+     * Returns an array containing all of the elements in this list in
+     * proper sequence (from first to last element); the runtime type of
+     * the returned array is that of the specified array.  If the list fits
+     * in the specified array, it is returned therein.  Otherwise, a new
+     * array is allocated with the runtime type of the specified array and
+     * the size of this list.
+     *
+     * &lt;p&gt;If the list fits in the specified array with room to spare (i.e.,
+     * the array has more elements than the list), the element in the array
+     * immediately following the end of the list is set to {@code null}.
+     * (This is useful in determining the length of the list &lt;i&gt;only&lt;/i&gt; if
+     * the caller knows that the list does not contain any null elements.)
+     *
+     * &lt;p&gt;Like the {@link #toArray()} method, this method acts as bridge between
+     * array-based and collection-based APIs.  Further, this method allows
+     * precise control over the runtime type of the output array, and may,
+     * under certain circumstances, be used to save allocation costs.
+     *
+     * &lt;p&gt;Suppose {@code x} is a list known to contain only strings.
+     * The following code can be used to dump the list into a newly
+     * allocated array of {@code String}:
+     *
+     * &lt;pre&gt;
+     *     String[] y = x.toArray(new String[0]);&lt;/pre&gt;
+     *
+     * Note that {@code toArray(new Object[0])} is identical in function to
+     * {@code toArray()}.
+     *
+     * @param a the array into which the elements of the list are to
+     *          be stored, if it is big enough; otherwise, a new array of the
+     *          same runtime type is allocated for this purpose.
+     * @return an array containing the elements of the list
+     * @throws ArrayStoreException if the runtime type of the specified array
+     *         is not a supertype of the runtime type of every element in
+     *         this list
+     * @throws NullPointerException if the specified array is null
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T&gt; T[] toArray(T[] a) {
+<span class="nc bnc" id="L1098" title="All 2 branches missed.">        if (a.length &lt; size)</span>
+<span class="nc" id="L1099">            a = (T[])java.lang.reflect.Array.newInstance(</span>
+<span class="nc" id="L1100">                                a.getClass().getComponentType(), size);</span>
+<span class="nc" id="L1101">        int i = 0;</span>
+<span class="nc" id="L1102">        Object[] result = a;</span>
+<span class="nc bnc" id="L1103" title="All 2 branches missed.">        for (Node&lt;E&gt; x = first; x != null; x = x.next)</span>
+<span class="nc" id="L1104">            result[i++] = x.item;</span>
+
+<span class="nc bnc" id="L1106" title="All 2 branches missed.">        if (a.length &gt; size)</span>
+<span class="nc" id="L1107">            a[size] = null;</span>
+
+<span class="nc" id="L1109">        return a;</span>
+    }
+
+    private static final long serialVersionUID = 876323262645176354L;
+
+    /**
+     * Saves the state of this {@code LinkedList} instance to a stream
+     * (that is, serializes it).
+     *
+     * @serialData The size of the list (the number of elements it
+     *             contains) is emitted (int), followed by all of its
+     *             elements (each an Object) in the proper order.
+     */
+    private void writeObject(java.io.ObjectOutputStream s)
+        throws java.io.IOException {
+        // Write out any hidden serialization magic
+<span class="nc" id="L1125">        s.defaultWriteObject();</span>
+
+        // Write out size
+<span class="nc" id="L1128">        s.writeInt(size);</span>
+
+        // Write out all elements in the proper order.
+<span class="nc bnc" id="L1131" title="All 2 branches missed.">        for (Node&lt;E&gt; x = first; x != null; x = x.next)</span>
+<span class="nc" id="L1132">            s.writeObject(x.item);</span>
+<span class="nc" id="L1133">    }</span>
+
+    /**
+     * Reconstitutes this {@code LinkedList} instance from a stream
+     * (that is, deserializes it).
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private void readObject(java.io.ObjectInputStream s)
+        throws java.io.IOException, ClassNotFoundException {
+        // Read in any hidden serialization magic
+<span class="nc" id="L1143">        s.defaultReadObject();</span>
+
+        // Read in size
+<span class="nc" id="L1146">        int size = s.readInt();</span>
+
+        // Read in all elements in the proper order.
+<span class="nc bnc" id="L1149" title="All 2 branches missed.">        for (int i = 0; i &lt; size; i++)</span>
+<span class="nc" id="L1150">            linkLast((E)s.readObject());</span>
+<span class="nc" id="L1151">    }</span>
+
+    /**
+     * Creates a &lt;em&gt;&lt;a href=&quot;Spliterator.html#binding&quot;&gt;late-binding&lt;/a&gt;&lt;/em&gt;
+     * and &lt;em&gt;fail-fast&lt;/em&gt; {@link Spliterator} over the elements in this
+     * list.
+     *
+     * &lt;p&gt;The {@code Spliterator} reports {@link Spliterator#SIZED} and
+     * {@link Spliterator#ORDERED}.  Overriding implementations should document
+     * the reporting of additional characteristic values.
+     *
+     * @implNote
+     * The {@code Spliterator} additionally reports {@link Spliterator#SUBSIZED}
+     * and implements {@code trySplit} to permit limited parallelism..
+     *
+     * @return a {@code Spliterator} over the elements in this list
+     * @since 1.8
+     */
+    @Override
+    public Spliterator&lt;E&gt; spliterator() {
+<span class="nc" id="L1171">        return new LLSpliterator&lt;E&gt;(this, -1, 0);</span>
+    }
+
+    /** A customized variant of Spliterators.IteratorSpliterator */
+    static final class LLSpliterator&lt;E&gt; implements Spliterator&lt;E&gt; {
+        static final int BATCH_UNIT = 1 &lt;&lt; 10;  // batch array size increment
+        static final int MAX_BATCH = 1 &lt;&lt; 25;  // max batch array size;
+        final LinkedList&lt;E&gt; list; // null OK unless traversed
+        Node&lt;E&gt; current;      // current node; null until initialized
+        int est;              // size estimate; -1 until first needed
+        int expectedModCount; // initialized when est set
+        int batch;            // batch size for splits
+
+<span class="nc" id="L1184">        LLSpliterator(LinkedList&lt;E&gt; list, int est, int expectedModCount) {</span>
+<span class="nc" id="L1185">            this.list = list;</span>
+<span class="nc" id="L1186">            this.est = est;</span>
+<span class="nc" id="L1187">            this.expectedModCount = expectedModCount;</span>
+<span class="nc" id="L1188">        }</span>
+
+        final int getEst() {
+            int s; // force initialization
+            final LinkedList&lt;E&gt; lst;
+<span class="nc bnc" id="L1193" title="All 2 branches missed.">            if ((s = est) &lt; 0) {</span>
+<span class="nc bnc" id="L1194" title="All 2 branches missed.">                if ((lst = list) == null)</span>
+<span class="nc" id="L1195">                    s = est = 0;</span>
+                else {
+<span class="nc" id="L1197">                    expectedModCount = lst.modCount;</span>
+<span class="nc" id="L1198">                    current = lst.first;</span>
+<span class="nc" id="L1199">                    s = est = lst.size;</span>
+                }
+            }
+<span class="nc" id="L1202">            return s;</span>
+        }
+
+<span class="nc" id="L1205">        public long estimateSize() { return (long) getEst(); }</span>
+
+        public Spliterator&lt;E&gt; trySplit() {
+            Node&lt;E&gt; p;
+<span class="nc" id="L1209">            int s = getEst();</span>
+<span class="nc bnc" id="L1210" title="All 4 branches missed.">            if (s &gt; 1 &amp;&amp; (p = current) != null) {</span>
+<span class="nc" id="L1211">                int n = batch + BATCH_UNIT;</span>
+<span class="nc bnc" id="L1212" title="All 2 branches missed.">                if (n &gt; s)</span>
+<span class="nc" id="L1213">                    n = s;</span>
+<span class="nc bnc" id="L1214" title="All 2 branches missed.">                if (n &gt; MAX_BATCH)</span>
+<span class="nc" id="L1215">                    n = MAX_BATCH;</span>
+<span class="nc" id="L1216">                Object[] a = new Object[n];</span>
+<span class="nc" id="L1217">                int j = 0;</span>
+<span class="nc bnc" id="L1218" title="All 4 branches missed.">                do { a[j++] = p.item; } while ((p = p.next) != null &amp;&amp; j &lt; n);</span>
+<span class="nc" id="L1219">                current = p;</span>
+<span class="nc" id="L1220">                batch = j;</span>
+<span class="nc" id="L1221">                est = s - j;</span>
+<span class="nc" id="L1222">                return Spliterators.spliterator(a, 0, j, Spliterator.ORDERED);</span>
+            }
+<span class="nc" id="L1224">            return null;</span>
+        }
+
+        public void forEachRemaining(Consumer&lt;? super E&gt; action) {
+            Node&lt;E&gt; p; int n;
+<span class="nc bnc" id="L1229" title="All 2 branches missed.">            if (action == null) throw new NullPointerException();</span>
+<span class="nc bnc" id="L1230" title="All 4 branches missed.">            if ((n = getEst()) &gt; 0 &amp;&amp; (p = current) != null) {</span>
+<span class="nc" id="L1231">                current = null;</span>
+<span class="nc" id="L1232">                est = 0;</span>
+                do {
+<span class="nc" id="L1234">                    E e = p.item;</span>
+<span class="nc" id="L1235">                    p = p.next;</span>
+<span class="nc" id="L1236">                    action.accept(e);</span>
+<span class="nc bnc" id="L1237" title="All 4 branches missed.">                } while (p != null &amp;&amp; --n &gt; 0);</span>
+            }
+<span class="nc bnc" id="L1239" title="All 2 branches missed.">            if (list.modCount != expectedModCount)</span>
+<span class="nc" id="L1240">                throw new ConcurrentModificationException();</span>
+<span class="nc" id="L1241">        }</span>
+
+        public boolean tryAdvance(Consumer&lt;? super E&gt; action) {
+            Node&lt;E&gt; p;
+<span class="nc bnc" id="L1245" title="All 2 branches missed.">            if (action == null) throw new NullPointerException();</span>
+<span class="nc bnc" id="L1246" title="All 4 branches missed.">            if (getEst() &gt; 0 &amp;&amp; (p = current) != null) {</span>
+<span class="nc" id="L1247">                --est;</span>
+<span class="nc" id="L1248">                E e = p.item;</span>
+<span class="nc" id="L1249">                current = p.next;</span>
+<span class="nc" id="L1250">                action.accept(e);</span>
+<span class="nc bnc" id="L1251" title="All 2 branches missed.">                if (list.modCount != expectedModCount)</span>
+<span class="nc" id="L1252">                    throw new ConcurrentModificationException();</span>
+<span class="nc" id="L1253">                return true;</span>
+            }
+<span class="nc" id="L1255">            return false;</span>
+        }
+
+        public int characteristics() {
+<span class="nc" id="L1259">            return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED;</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
